@@ -3,10 +3,10 @@ from config import *
 from fastapi import FastAPI
 from pydantic import BaseModel, EmailStr, ValidationError, PositiveInt, validator
 from redis_service import Code
-from email_service import Emessage
+from email_service import send_message
 import random
 from fastapi.responses import JSONResponse
-
+from celery import Celery
 
 app = FastAPI()
 
@@ -30,8 +30,7 @@ def send_code(request: User):
     elif limit == False:
         return JSONResponse({"message":"Too much attempts"}, status_code=429)
     code_hanler.save_code(email,code)
-    transfer = Emessage()
-    transfer.send_message(EMAIL_HOST_USER, email, str(code))
+    send_message.delay(EMAIL_HOST_USER, email, str(code))
     return JSONResponse(content={"message":"The code was sent"},status_code = 200)
 
 
